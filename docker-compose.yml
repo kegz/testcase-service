@@ -1,0 +1,12 @@
+services:
+  testcase-service:
+    build: .
+    container_name: testcase-service
+    environment:
+      - PORT=8083
+      - NODE_ENV=production
+      - JWT_SECRET=super_secret_key
+      - MONGO_URI=mongodb+srv://kegzpeach:hlHe8HN2m8TgOB1F@tangomanagement.ngouqxc.mongodb.net/tcms_testcase
+    ports:
+      - "8083:8083"
+    restart: unless-stopped
