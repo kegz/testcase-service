@@ -2,7 +2,7 @@ import { SuiteModel } from "../models/Suite.model.js";
 import mongoose from "mongoose";
 export const listSuites = async (req, res) => {
     try {
-        const { projectId } = req.query;
+        const { projectId } = req.params;
         const filter = {};
         if (projectId && mongoose.isValidObjectId(projectId))
             filter.projectId = projectId;
