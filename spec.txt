@@ -1,0 +1,339 @@
+TCMS – Phase 1 Specification
+1. Purpose & Goals (Phase 1)
+
+Phase 1 establishes the foundational Test Case Management capability of the TCMS platform.
+
+Primary Goal
+
+Enable teams to define, organize, and manage test cases in a secure, multi-tenant system that integrates cleanly with projects and later test execution.
+
+Non-Goals (Explicitly Out of Scope)
+
+Test execution logic
+
+Automation orchestration
+
+Reporting & analytics
+
+Test case versioning
+
+Workflow/state machines
+
+Bulk import/export
+
+Advanced search & tagging
+
+2. Phase 1 Personas
+QA Engineer
+
+Creates and organizes test cases
+
+Structures suites and sections per project
+
+Maintains test steps and expected results
+
+QA Lead
+
+Reviews and curates test assets
+
+Manages test structure consistency
+
+Archives obsolete suites/sections
+
+System / Platform
+
+Enforces tenant isolation
+
+Ensures data consistency and integrity
+
+Provides predictable APIs for future phases
+
+3. High-Level Architecture (Phase 1)
+Services in Scope
+
+Test Case Service (primary)
+
+Project Service (dependency)
+
+User Service (auth & tenant context)
+
+service-commons (shared infrastructure)
+
+Ownership Boundaries
+Concern	Service
+Test case definitions	Test Case Service
+Project lifecycle	Project Service
+Users / tenants / roles	User Service
+Auth, tenant, pagination, errors	service-commons
+Test execution & results	Results Service (Phase 2+)
+4. Core Domain Model (Phase 1)
+Hierarchy
+Tenant
+ └─ Project
+     └─ Suite
+         └─ Section
+             └─ Test Case
+
+Entity Definitions (Minimal)
+Suite
+
+id
+
+tenantId
+
+projectId
+
+name
+
+key (auto-generated, immutable)
+
+description
+
+isActive
+
+createdAt
+
+updatedAt
+
+Section
+
+id
+
+tenantId
+
+projectId
+
+suiteId
+
+name
+
+key
+
+description
+
+isActive
+
+createdAt
+
+updatedAt
+
+Test Case
+
+id
+
+tenantId
+
+projectId
+
+suiteId
+
+sectionId
+
+title
+
+description
+
+steps[]
+
+expectedResult
+
+priority (optional, enum)
+
+isActive
+
+createdAt
+
+updatedAt
+
+5. Functional Requirements (Phase 1)
+5.1 Test Suite Management
+
+Create suite under a project
+
+List suites (paginated, project-filtered)
+
+Get suite by ID
+
+Update suite metadata
+
+Soft-delete suite (isActive=false)
+
+5.2 Section Management
+
+Create section under a suite
+
+List sections by suite (paginated)
+
+Get section by ID
+
+Update section metadata
+
+Soft-delete section
+
+5.3 Test Case Management
+
+Create test case under a section
+
+List test cases by section (paginated)
+
+Get test case by ID
+
+Update test case content
+
+Soft-delete test case
+
+6. Cross-Cutting Requirements (Mandatory in Phase 1)
+6.1 Multi-Tenancy
+
+Tenant ID derived only from JWT
+
+No API accepts tenantId in request body
+
+All DB queries must filter by tenantId
+
+Cross-tenant access must be impossible
+
+6.2 Authentication & Authorization
+
+JWT required for all non-health endpoints
+
+Health check endpoints unauthenticated
+
+Role-based authorization deferred (Phase 2)
+
+6.3 Pagination (All List Endpoints)
+
+Default limit = 50
+
+Max limit = 200
+
+Support offset
+
+Response must include:
+
+{
+  "items": [],
+  "total": number,
+  "limit": number,
+  "offset": number
+}
+
+6.4 Soft Delete Strategy
+
+All domain entities use isActive
+
+Default queries return isActive=true
+
+No cascade delete required in Phase 1
+
+6.5 Validation
+
+Request bodies validated via shared validation middleware
+
+Invalid ObjectId → 400 Bad Request
+
+Missing resource → 404 Not Found
+
+6.6 Error Handling
+
+All errors returned in consistent format
+
+No raw stack traces in responses
+
+Use shared error middleware from service-commons
+
+7. service-commons Phase 1 Responsibilities
+Required Utilities
+
+JWT parsing & user context typing
+
+requireTenant middleware
+
+Pagination utilities
+
+Validation middleware
+
+Standard error & response helpers
+
+Logging middleware
+
+Security headers / CORS middleware
+
+Express Request Extensions
+req.user
+req.tenantId
+
+8. API Contracts (Phase 1)
+Required Endpoints (Summary)
+Resource	Endpoint	Notes
+Health	GET /health	No auth
+Suites	POST /suites	Auth + tenant
+Suites	GET /suites	Paginated
+Sections	POST /sections	Suite-scoped
+Sections	GET /sections/suite/:id	Paginated
+Test Cases	POST /testcases	Section-scoped
+Test Cases	GET /testcases/section/:id	Paginated
+
+API behavior must match Postman collection (current source of truth).
+
+9. Non-Functional Requirements
+Performance
+
+List endpoints must handle 10k+ records with pagination
+
+Indexed queries on tenantId + parentId
+
+Security
+
+No secrets in repo defaults
+
+JWT validation on every request
+
+Tenant isolation tested
+
+Observability
+
+Request logging enabled
+
+Errors logged with correlation ID (if available)
+
+10. Phase 1 Definition of Done (DoD)
+
+Phase 1 is considered complete when:
+
+ Tenant isolation enforced everywhere
+
+ Pagination implemented on all list endpoints
+
+ All entities use soft delete
+
+ Validation middleware applied
+
+ Consistent error handling across APIs
+
+ service-commons utilities consumed (no duplication)
+
+ Postman collection passes end-to-end
+
+ Basic contract test against Project Service
+
+ No execution logic present
+
+11. Phase 2 Preview (For Alignment Only)
+
+Test case versioning
+
+Bulk import/export
+
+Tags & advanced search
+
+Execution linkage
+
+Permissions & roles
+
+Analytics & reporting
+
+Add the pino logging library (fast, modern, and widely used).
+Integrate it into the main app entry (index.ts).
+Replace console.log with structured logger calls.
+Add a basic error logger middleware.

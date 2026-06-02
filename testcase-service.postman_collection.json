@@ -1,0 +1,435 @@
+{
+	"info": {
+		"_postman_id": "testcase-service-api",
+		"name": "Test Case Service API",
+		"description": "Complete API collection for the Test Case Service - a microservice for managing test suites, sections, and test cases. This service provides full CRUD operations for organizing and managing quality assurance test cases in a hierarchical structure: Suites → Sections → Test Cases.\n\n**Base URL:** `http://localhost:3000`\n\n**Authentication:** All endpoints require authentication via JWT token in the Authorization header.\n\n**Hierarchy:**\n- **Suite**: Top-level container for organizing test cases by project\n- **Section**: Logical grouping within a suite\n- **Test Case**: Individual test case with steps, expected results, and metadata",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"version": "1.0.0"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "project_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "suite_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "section_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testcase_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "**Health Check Endpoint**\n\nVerifies that the Test Case Service is running and responsive. This endpoint does not require authentication.\n\n**Response:**\n```json\n{\n  \"status\": \"ok\"\n}\n```\n\n**Use Case:** Useful for monitoring, load balancers, and deployment verification."
+					},
+					"response": []
+				}
+			],
+			"description": "Service health and status endpoints"
+		},
+		{
+			"name": "Suites",
+			"item": [
+				{
+					"name": "List All Suites",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/suites",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suites"
+							]
+						},
+						"description": "**List All Suites**\n\nRetrieves a list of all test suites, optionally filtered by project ID. Suites are returned in descending order by creation date (newest first).\n\n**Query Parameters:**\n- `projectId` (optional): Filter suites by project ID. If provided and valid, only suites belonging to that project are returned.\n\n**Authentication:** Required (JWT Bearer token)\n\n**Response:** Array of suite objects\n```json\n[\n  {\n    \"_id\": \"507f1f77bcf86cd799439011\",\n    \"projectId\": \"507f1f77bcf86cd799439012\",\n    \"name\": \"Authentication Test Suite\",\n    \"key\": \"ATS\",\n    \"description\": \"Test cases for authentication flows\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-01-15T10:30:00.000Z\",\n    \"updatedAt\": \"2026-01-15T10:30:00.000Z\"\n  }\n]\n```\n\n**Use Case:** View all available test suites in the system or filter by specific project to see project-specific suites."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Suite by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/suites/{{suite_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suites",
+								"{{suite_id}}"
+							]
+						},
+						"description": "**Get Single Suite**\n\nRetrieves detailed information about a specific test suite by its unique identifier.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the suite\n\n**Authentication:** Required (JWT Bearer token)\n\n**Response:** Suite object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439011\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"name\": \"Authentication Test Suite\",\n  \"key\": \"ATS\",\n  \"description\": \"Comprehensive test cases for all authentication flows including login, logout, password reset, and session management\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-15T10:30:00.000Z\",\n  \"updatedAt\": \"2026-01-15T10:30:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Suite not found or invalid ID format\n\n**Use Case:** Get complete details of a specific suite before viewing its sections and test cases."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Suite",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"name\": \"API Test Suite\",\n  \"description\": \"Test cases for REST API endpoints\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/suites",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suites"
+							]
+						},
+						"description": "**Create New Suite**\n\nCreates a new test suite in the system. A suite is a top-level container for organizing test cases by project. The system automatically generates a unique key based on the suite name.\n\n**Authentication:** Required (JWT Bearer token)\n\n**Request Body:**\n```json\n{\n  \"projectId\": \"507f1f77bcf86cd799439012\",  // Required: MongoDB ObjectId of the project\n  \"name\": \"API Test Suite\",                // Required: Suite name (min 2 characters)\n  \"description\": \"Test cases for REST API\" // Optional: Detailed description\n}\n```\n\n**Validation Rules:**\n- `projectId`: Required, must be a valid MongoDB ObjectId\n- `name`: Required, minimum 2 characters\n- `description`: Optional, can be null or empty string\n\n**Auto-Generated Fields:**\n- `key`: Automatically generated from name initials (e.g., \"API Test Suite\" → \"ATS\")\n- `isActive`: Defaults to `true`\n- `createdAt`, `updatedAt`: Auto-generated timestamps\n\n**Response:** Created suite object with generated key\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439011\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"name\": \"API Test Suite\",\n  \"key\": \"ATS\",\n  \"description\": \"Test cases for REST API endpoints\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-20T14:30:00.000Z\",\n  \"updatedAt\": \"2026-01-20T14:30:00.000Z\"\n}\n```\n\n**Use Case:** Create a new suite when starting testing for a new project or major feature area."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Suite",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"API Integration Test Suite\",\n  \"description\": \"Updated description for API test cases including integration tests\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/suites/{{suite_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suites",
+								"{{suite_id}}"
+							]
+						},
+						"description": "**Update Existing Suite**\n\nUpdates an existing test suite. Only provided fields will be updated; omitted fields remain unchanged.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the suite to update\n\n**Authentication:** Required (JWT Bearer token)\n\n**Request Body (all fields optional):**\n```json\n{\n  \"name\": \"Updated Suite Name\",          // Optional: New suite name (min 2 chars)\n  \"description\": \"Updated description\",  // Optional: New description\n  \"isActive\": true                        // Optional: Activate/deactivate suite\n}\n```\n\n**Validation Rules:**\n- `name`: If provided, minimum 2 characters\n- `description`: Can be null or empty string\n- `isActive`: Boolean value\n- `projectId` and `key`: Cannot be changed after creation\n\n**Response:** Updated suite object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439011\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"name\": \"API Integration Test Suite\",\n  \"key\": \"ATS\",\n  \"description\": \"Updated description for API test cases including integration tests\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-15T10:30:00.000Z\",\n  \"updatedAt\": \"2026-01-20T15:45:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Suite not found or validation error\n\n**Use Case:** Modify suite details, update descriptions, or change activation status."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Suite (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/suites/{{suite_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suites",
+								"{{suite_id}}"
+							]
+						},
+						"description": "**Delete Suite (Soft Delete)**\n\nPerforms a soft delete on a test suite by setting its `isActive` flag to `false`. The suite is not permanently removed from the database and can be reactivated later.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the suite to delete\n\n**Authentication:** Required (JWT Bearer token)\n\n**Behavior:**\n- Sets `isActive` to `false`\n- Suite data remains in database\n- Related sections and test cases are NOT automatically deleted\n- Can be reversed by updating `isActive` back to `true`\n\n**Response:** Updated suite object with `isActive: false`\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439011\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"name\": \"API Test Suite\",\n  \"key\": \"ATS\",\n  \"description\": \"Test cases for REST API endpoints\",\n  \"isActive\": false,\n  \"createdAt\": \"2026-01-15T10:30:00.000Z\",\n  \"updatedAt\": \"2026-01-20T16:00:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Suite not found or invalid ID\n\n**Use Case:** Archive obsolete or deprecated test suites without losing historical data. Recommended approach instead of hard deletion for audit trail purposes."
+					},
+					"response": []
+				}
+			],
+			"description": "Test Suite management endpoints - Suites are top-level containers for organizing test cases by project. Each suite automatically gets a unique key generated from its name."
+		},
+		{
+			"name": "Sections",
+			"item": [
+				{
+					"name": "List Sections by Suite",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/sections/suite/{{suite_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sections",
+								"suite",
+								"{{suite_id}}"
+							]
+						},
+						"description": "**List Sections by Suite**\n\nRetrieves all sections belonging to a specific test suite. Sections are returned in descending order by creation date (newest first).\n\n**Path Parameters:**\n- `suiteId` (required): MongoDB ObjectId of the parent suite\n\n**Authentication:** Required (JWT Bearer token)\n\n**Response:** Array of section objects\n```json\n[\n  {\n    \"_id\": \"507f1f77bcf86cd799439021\",\n    \"projectId\": \"507f1f77bcf86cd799439012\",\n    \"suiteId\": \"507f1f77bcf86cd799439011\",\n    \"name\": \"Login Tests\",\n    \"key\": \"SEC-LT\",\n    \"description\": \"Test cases for login functionality\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-01-16T08:00:00.000Z\",\n    \"updatedAt\": \"2026-01-16T08:00:00.000Z\"\n  },\n  {\n    \"_id\": \"507f1f77bcf86cd799439022\",\n    \"projectId\": \"507f1f77bcf86cd799439012\",\n    \"suiteId\": \"507f1f77bcf86cd799439011\",\n    \"name\": \"Password Reset Tests\",\n    \"key\": \"SEC-PRT\",\n    \"description\": \"Test cases for password reset flow\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-01-16T09:15:00.000Z\",\n    \"updatedAt\": \"2026-01-16T09:15:00.000Z\"\n  }\n]\n```\n\n**Error Responses:**\n- `400`: Invalid suiteId format\n\n**Use Case:** View all logical groupings within a suite to organize test cases by feature or module."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Section by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/sections/{{section_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sections",
+								"{{section_id}}"
+							]
+						},
+						"description": "**Get Single Section**\n\nRetrieves detailed information about a specific section by its unique identifier.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the section\n\n**Authentication:** Required (JWT Bearer token)\n\n**Response:** Section object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439021\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"name\": \"Login Tests\",\n  \"key\": \"SEC-LT\",\n  \"description\": \"Comprehensive test cases covering all login scenarios including valid credentials, invalid credentials, account lockout, and session management\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-16T08:00:00.000Z\",\n  \"updatedAt\": \"2026-01-16T08:00:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Section not found or invalid ID format\n\n**Use Case:** Get complete details of a specific section before viewing its test cases."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Section",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"suiteId\": \"{{suite_id}}\",\n  \"name\": \"Login Tests\",\n  \"description\": \"Test cases for user login functionality\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/sections",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sections"
+							]
+						},
+						"description": "**Create New Section**\n\nCreates a new section within a test suite. Sections provide logical grouping for test cases. The system automatically generates a unique key and inherits the projectId from the parent suite.\n\n**Authentication:** Required (JWT Bearer token)\n\n**Request Body:**\n```json\n{\n  \"suiteId\": \"507f1f77bcf86cd799439011\",  // Required: MongoDB ObjectId of parent suite\n  \"name\": \"Login Tests\",                  // Required: Section name (min 2 characters)\n  \"description\": \"Login test cases\"       // Optional: Detailed description\n}\n```\n\n**Validation Rules:**\n- `suiteId`: Required, must be a valid MongoDB ObjectId, and suite must exist\n- `name`: Required, minimum 2 characters\n- `description`: Optional, can be null or empty string\n\n**Auto-Generated Fields:**\n- `key`: Automatically generated as \"SEC-\" + name initials (e.g., \"Login Tests\" → \"SEC-LT\")\n- `projectId`: Automatically inherited from parent suite\n- `isActive`: Defaults to `true`\n- `createdAt`, `updatedAt`: Auto-generated timestamps\n\n**Response:** Created section object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439021\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"name\": \"Login Tests\",\n  \"key\": \"SEC-LT\",\n  \"description\": \"Test cases for user login functionality\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-20T14:30:00.000Z\",\n  \"updatedAt\": \"2026-01-20T14:30:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Invalid suiteId or suite not found\n\n**Use Case:** Create logical groupings within a suite to organize test cases by feature, module, or functional area."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Section",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"User Authentication Tests\",\n  \"description\": \"Expanded test cases covering all authentication scenarios\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/sections/{{section_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sections",
+								"{{section_id}}"
+							]
+						},
+						"description": "**Update Existing Section**\n\nUpdates an existing section. Only provided fields will be updated; omitted fields remain unchanged.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the section to update\n\n**Authentication:** Required (JWT Bearer token)\n\n**Request Body (all fields optional):**\n```json\n{\n  \"name\": \"Updated Section Name\",        // Optional: New section name (min 2 chars)\n  \"description\": \"Updated description\",  // Optional: New description\n  \"isActive\": true                        // Optional: Activate/deactivate section\n}\n```\n\n**Validation Rules:**\n- `name`: If provided, minimum 2 characters\n- `description`: Can be null or empty string\n- `isActive`: Boolean value\n- `suiteId`, `projectId`, and `key`: Cannot be changed after creation\n\n**Response:** Updated section object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439021\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"name\": \"User Authentication Tests\",\n  \"key\": \"SEC-LT\",\n  \"description\": \"Expanded test cases covering all authentication scenarios\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-16T08:00:00.000Z\",\n  \"updatedAt\": \"2026-01-20T15:45:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Section not found or validation error\n\n**Use Case:** Modify section details, update descriptions, or change activation status."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Section (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/sections/{{section_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sections",
+								"{{section_id}}"
+							]
+						},
+						"description": "**Delete Section (Soft Delete)**\n\nPerforms a soft delete on a section by setting its `isActive` flag to `false`. The section is not permanently removed from the database and can be reactivated later.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the section to delete\n\n**Authentication:** Required (JWT Bearer token)\n\n**Behavior:**\n- Sets `isActive` to `false`\n- Section data remains in database\n- Related test cases are NOT automatically deleted\n- Can be reversed by updating `isActive` back to `true`\n\n**Response:** Updated section object with `isActive: false`\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439021\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"name\": \"Login Tests\",\n  \"key\": \"SEC-LT\",\n  \"description\": \"Test cases for user login functionality\",\n  \"isActive\": false,\n  \"createdAt\": \"2026-01-16T08:00:00.000Z\",\n  \"updatedAt\": \"2026-01-20T16:00:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Section not found or invalid ID\n\n**Use Case:** Archive obsolete sections without losing historical data. Recommended approach for maintaining audit trail."
+					},
+					"response": []
+				}
+			],
+			"description": "Section management endpoints - Sections are logical groupings within suites that organize test cases by feature or module. Each section automatically gets a unique key with 'SEC-' prefix."
+		},
+		{
+			"name": "Test Cases",
+			"item": [
+				{
+					"name": "List Test Cases by Section",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cases/section/{{section_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cases",
+								"section",
+								"{{section_id}}"
+							]
+						},
+						"description": "**List Test Cases by Section**\n\nRetrieves all test cases belonging to a specific section. Test cases are returned in descending order by creation date (newest first).\n\n**Path Parameters:**\n- `sectionId` (required): MongoDB ObjectId of the parent section\n\n**Authentication:** Required (JWT Bearer token)\n\n**Response:** Array of test case objects\n```json\n[\n  {\n    \"_id\": \"507f1f77bcf86cd799439031\",\n    \"projectId\": \"507f1f77bcf86cd799439012\",\n    \"suiteId\": \"507f1f77bcf86cd799439011\",\n    \"sectionId\": \"507f1f77bcf86cd799439021\",\n    \"title\": \"Verify successful login with valid credentials\",\n    \"priority\": \"High\",\n    \"type\": \"Functional\",\n    \"status\": \"Ready\",\n    \"preconditions\": \"User account exists and is active\",\n    \"steps\": [{\"action\": \"Navigate to login page\", \"expected\": \"Login form displayed\"}],\n    \"expectedResult\": \"User is logged in and redirected to dashboard\",\n    \"isActive\": true,\n    \"createdAt\": \"2026-01-17T10:00:00.000Z\",\n    \"updatedAt\": \"2026-01-17T10:00:00.000Z\"\n  }\n]\n```\n\n**Error Responses:**\n- `400`: Invalid sectionId format\n\n**Use Case:** View all test cases within a specific section to execute testing activities."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Test Case by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cases/{{testcase_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cases",
+								"{{testcase_id}}"
+							]
+						},
+						"description": "**Get Single Test Case**\n\nRetrieves detailed information about a specific test case by its unique identifier.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the test case\n\n**Authentication:** Required (JWT Bearer token)\n\n**Response:** Test case object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439031\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"sectionId\": \"507f1f77bcf86cd799439021\",\n  \"title\": \"Verify successful login with valid credentials\",\n  \"priority\": \"High\",\n  \"type\": \"Functional\",\n  \"status\": \"Ready\",\n  \"preconditions\": \"1. User account exists in the system\\n2. Account is active and not locked\\n3. Browser has cookies enabled\",\n  \"steps\": [\n    {\n      \"action\": \"Navigate to login page\",\n      \"expected\": \"Login form is displayed with username and password fields\"\n    },\n    {\n      \"action\": \"Enter valid username\",\n      \"expected\": \"Username is accepted\"\n    },\n    {\n      \"action\": \"Enter valid password\",\n      \"expected\": \"Password is masked\"\n    },\n    {\n      \"action\": \"Click Login button\",\n      \"expected\": \"Authentication process starts\"\n    }\n  ],\n  \"expectedResult\": \"User is successfully authenticated and redirected to the dashboard. Welcome message is displayed with user's name.\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-17T10:00:00.000Z\",\n  \"updatedAt\": \"2026-01-17T10:00:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Test case not found or invalid ID format\n\n**Use Case:** Get complete details of a specific test case for test execution or review."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Test Case",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Verify successful login with valid credentials\",\n  \"suiteId\": \"{{suite_id}}\",\n  \"sectionId\": \"{{section_id}}\",\n  \"priority\": \"High\",\n  \"type\": \"Functional\",\n  \"status\": \"Draft\",\n  \"preconditions\": \"User account exists and is active\",\n  \"steps\": [\n    {\n      \"action\": \"Navigate to login page\",\n      \"expected\": \"Login form is displayed\",\n      \"data\": {}\n    },\n    {\n      \"action\": \"Enter valid username and password\",\n      \"expected\": \"Credentials are accepted\",\n      \"data\": {\n        \"username\": \"testuser@example.com\",\n        \"password\": \"Test@123\"\n      }\n    },\n    {\n      \"action\": \"Click Login button\",\n      \"expected\": \"User is authenticated\",\n      \"data\": {}\n    }\n  ],\n  \"expectedResult\": \"User is logged in and redirected to dashboard\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cases",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cases"
+							]
+						},
+						"description": "**Create New Test Case**\n\nCreates a new test case within a section. The system automatically inherits the projectId from the parent section.\n\n**Authentication:** Required (JWT Bearer token)\n\n**Request Body:**\n```json\n{\n  \"title\": \"Test case title\",              // Required: Descriptive title (min 2 chars)\n  \"suiteId\": \"507f1f77bcf86cd799439011\",   // Required: Parent suite ObjectId\n  \"sectionId\": \"507f1f77bcf86cd799439021\", // Required: Parent section ObjectId\n  \"priority\": \"High\",                      // Optional: Low|Medium|High|Critical (default: Medium)\n  \"type\": \"Functional\",                    // Optional: Functional|Regression|Performance|Security|Other (default: Functional)\n  \"status\": \"Draft\",                       // Optional: Draft|Ready|Deprecated (default: Draft)\n  \"preconditions\": \"Account exists\",       // Optional: Test preconditions\n  \"steps\": [                               // Optional: Array of test steps (default: [])\n    {\n      \"action\": \"Step action\",             // Required: Step description\n      \"expected\": \"Expected result\",       // Optional: Expected outcome\n      \"data\": {}                           // Optional: Test data object\n    }\n  ],\n  \"expectedResult\": \"Final result\"         // Optional: Overall expected result\n}\n```\n\n**Validation Rules:**\n- `title`: Required, minimum 2 characters\n- `suiteId`: Required, must be valid ObjectId, suite must exist\n- `sectionId`: Required, must be valid ObjectId, section must exist\n- `priority`: Must be one of: Low, Medium, High, Critical\n- `type`: Must be one of: Functional, Regression, Performance, Security, Other\n- `status`: Must be one of: Draft, Ready, Deprecated\n- `steps`: Array of step objects, each requiring an `action` field\n\n**Auto-Generated Fields:**\n- `projectId`: Automatically inherited from parent section\n- `isActive`: Defaults to `true`\n- `createdAt`, `updatedAt`: Auto-generated timestamps\n\n**Response:** Created test case object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439031\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"sectionId\": \"507f1f77bcf86cd799439021\",\n  \"title\": \"Verify successful login with valid credentials\",\n  \"priority\": \"High\",\n  \"type\": \"Functional\",\n  \"status\": \"Draft\",\n  \"preconditions\": \"User account exists and is active\",\n  \"steps\": [\n    {\n      \"action\": \"Navigate to login page\",\n      \"expected\": \"Login form is displayed\",\n      \"data\": {}\n    }\n  ],\n  \"expectedResult\": \"User is logged in and redirected to dashboard\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-20T14:30:00.000Z\",\n  \"updatedAt\": \"2026-01-20T14:30:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Invalid suiteId/sectionId, entities not found, or validation error\n\n**Use Case:** Document detailed test scenarios with steps, expected results, and test data for manual or automated testing."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Test Case",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Verify login with valid credentials and 2FA\",\n  \"priority\": \"Critical\",\n  \"status\": \"Ready\",\n  \"steps\": [\n    {\n      \"action\": \"Navigate to login page\",\n      \"expected\": \"Login form is displayed\"\n    },\n    {\n      \"action\": \"Enter valid username and password\",\n      \"expected\": \"Credentials are accepted\"\n    },\n    {\n      \"action\": \"Enter 2FA code\",\n      \"expected\": \"2FA code is validated\"\n    },\n    {\n      \"action\": \"Click Login button\",\n      \"expected\": \"User is authenticated\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cases/{{testcase_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cases",
+								"{{testcase_id}}"
+							]
+						},
+						"description": "**Update Existing Test Case**\n\nUpdates an existing test case. Only provided fields will be updated; omitted fields remain unchanged.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the test case to update\n\n**Authentication:** Required (JWT Bearer token)\n\n**Request Body (all fields optional):**\n```json\n{\n  \"title\": \"Updated title\",               // Optional: New title (min 2 chars)\n  \"priority\": \"Critical\",                  // Optional: Low|Medium|High|Critical\n  \"type\": \"Regression\",                    // Optional: Functional|Regression|Performance|Security|Other\n  \"status\": \"Ready\",                       // Optional: Draft|Ready|Deprecated\n  \"preconditions\": \"Updated conditions\",   // Optional: New preconditions\n  \"steps\": [                               // Optional: Updated test steps\n    {\n      \"action\": \"New step\",\n      \"expected\": \"New expected result\",\n      \"data\": {}\n    }\n  ],\n  \"expectedResult\": \"Updated result\",      // Optional: New expected result\n  \"isActive\": true                         // Optional: Activate/deactivate\n}\n```\n\n**Validation Rules:**\n- `title`: If provided, minimum 2 characters\n- `priority`: Must be one of: Low, Medium, High, Critical\n- `type`: Must be one of: Functional, Regression, Performance, Security, Other\n- `status`: Must be one of: Draft, Ready, Deprecated\n- `steps`: Each step object must have an `action` field\n- `suiteId`, `sectionId`, `projectId`: Cannot be changed after creation\n\n**Response:** Updated test case object\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439031\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"sectionId\": \"507f1f77bcf86cd799439021\",\n  \"title\": \"Verify login with valid credentials and 2FA\",\n  \"priority\": \"Critical\",\n  \"type\": \"Functional\",\n  \"status\": \"Ready\",\n  \"preconditions\": \"User account exists and is active\",\n  \"steps\": [\n    {\n      \"action\": \"Navigate to login page\",\n      \"expected\": \"Login form is displayed\"\n    },\n    {\n      \"action\": \"Enter 2FA code\",\n      \"expected\": \"2FA code is validated\"\n    }\n  ],\n  \"expectedResult\": \"User is logged in and redirected to dashboard\",\n  \"isActive\": true,\n  \"createdAt\": \"2026-01-17T10:00:00.000Z\",\n  \"updatedAt\": \"2026-01-20T15:45:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Test case not found or validation error\n\n**Use Case:** Modify test case details, update test steps, change priority/status, or refine expected results based on requirements changes."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Test Case (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cases/{{testcase_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cases",
+								"{{testcase_id}}"
+							]
+						},
+						"description": "**Delete Test Case (Soft Delete)**\n\nPerforms a soft delete on a test case by setting its `isActive` flag to `false`. The test case is not permanently removed from the database and can be reactivated later.\n\n**Path Parameters:**\n- `id` (required): MongoDB ObjectId of the test case to delete\n\n**Authentication:** Required (JWT Bearer token)\n\n**Behavior:**\n- Sets `isActive` to `false`\n- Test case data remains in database\n- Can be reversed by updating `isActive` back to `true`\n- Preserves test execution history\n\n**Response:** Updated test case object with `isActive: false`\n```json\n{\n  \"_id\": \"507f1f77bcf86cd799439031\",\n  \"projectId\": \"507f1f77bcf86cd799439012\",\n  \"suiteId\": \"507f1f77bcf86cd799439011\",\n  \"sectionId\": \"507f1f77bcf86cd799439021\",\n  \"title\": \"Verify successful login with valid credentials\",\n  \"priority\": \"High\",\n  \"type\": \"Functional\",\n  \"status\": \"Ready\",\n  \"preconditions\": \"User account exists and is active\",\n  \"steps\": [{\"action\": \"Navigate to login page\"}],\n  \"expectedResult\": \"User is logged in and redirected to dashboard\",\n  \"isActive\": false,\n  \"createdAt\": \"2026-01-17T10:00:00.000Z\",\n  \"updatedAt\": \"2026-01-20T16:00:00.000Z\"\n}\n```\n\n**Error Responses:**\n- `400`: Test case not found or invalid ID\n\n**Use Case:** Archive obsolete or deprecated test cases without losing historical data. Recommended for maintaining audit trail and test case versioning."
+					},
+					"response": []
+				}
+			],
+			"description": "Test Case management endpoints - Test cases are detailed test scenarios with steps, expected results, and metadata like priority and type. They represent the actual tests to be executed."
+		}
+	]
+}

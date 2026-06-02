@@ -1,0 +1,194 @@
+Add tenantId field to Suite/Section/TestCase schemas
+
+Files:
+
+testcase_service/src/models/Suite.model.ts
+
+testcase_service/src/models/Section.model.ts
+
+testcase_service/src/models/TestCase.model.ts
+
+✅ Requirements:
+
+tenantId required, indexed
+
+All queries must filter by tenantId
+
+Populate tenantId on create
+
+Controllers:
+
+suite.controller.ts
+
+section.controller.ts
+
+testcase.controller.ts
+
+✅ Action:
+
+Never accept tenantId from request body
+
+Use req.tenantId (from middleware)
+
+Ensure ownership checks on read/update/delete
+
+✅ Action:
+
+findOne({ _id, tenantId }) not findById(_id)
+
+Same for updates: findOneAndUpdate({ _id, tenantId }, ...)
+
+Apply pagination to ALL list endpoints
+
+Examples from Postman :
+
+GET /suites
+
+GET /sections/suite/:suiteId
+
+GET /cases/section/:sectionId (or whichever your routes expose)
+
+✅ Implementation:
+
+Use limit/offset + countDocuments() for total
+
+Return paged response shape (consistent across services)
+
+Fix projectId filtering bug in suite listing
+
+Current code reads projectId from req.params but route is GET /suites
+
+✅ Action:
+
+Read projectId from req.query.projectId
+
+Validate ObjectId; if invalid return 400
+
+D) Consistent HTTP semantics + response shape
+
+Correct status codes
+
+Replace “not found” responses using 400 with 404
+
+Invalid ID format = 400
+
+Unauthorized = 401
+
+Forbidden/tenant mismatch (if applicable) = 403 (or just 404 to avoid enumeration)
+
+Standardize response envelopes
+
+Decide and apply ONE approach:
+
+Option A: raw objects (current style)
+
+Option B (recommended): successResponse() + errorResponse() from commons
+
+✅ If using envelopes, apply everywhere.
+
+Wire Joi schemas into routes
+
+Files:
+
+routes/suite.routes.ts
+
+routes/section.routes.ts
+
+routes/testcase.routes.ts
+
+✅ Action:
+
+router.post("/", authenticate, requireTenant, validateBody(createSuiteSchema), createSuite)
+
+Same for update endpoints
+
+
+F) Data integrity: parent-child validation
+
+Validate suiteId/sectionId ownership on create
+
+Example:
+
+Creating Section: verify suite exists and belongs to same tenantId (+ same projectId if enforced)
+
+Creating TestCase:
+
+verify section exists (and optionally suite matches)
+
+Add indexes
+
+Suite: { tenantId: 1, projectId: 1, isActive: 1, createdAt: -1 }
+
+Section: { tenantId: 1, suiteId: 1, isActive: 1 }
+
+TestCase: { tenantId: 1, sectionId: 1, isActive: 1 }
+
+G) Soft delete consistency
+
+Ensure Sections also soft delete
+
+If section delete currently hard-deletes (check controller), change to isActive:false
+
+Ensure list endpoints default to isActive:true unless explicitly requested
+
+Decide cascade behavior
+
+Phase 1 simplest:
+
+Soft delete suite does NOT auto-delete children
+
+But then list endpoints must filter children by isActive:true so archived items don’t show.
+
+H) Minimal contract alignment with Project Service
+
+Project existence validation strategy
+
+Phase 1 options:
+
+“Trust projectId” (fastest)
+
+OR lightweight check: call Project Service on suite create/update (more correct)
+
+If doing the check:
+
+Add a tiny projectClient.ts with timeout and clear error mapping
+
+P2 (Nice-to-have / polish, can slip past Phase 1)
+
+Add OpenAPI from Postman collection
+
+Add basic e2e tests
+
+Suites CRUD happy-path
+
+Tenant isolation tests (must)
+
+Add CI checks
+
+lint + unit tests + build
+
+Docker compose hardening
+
+Use env vars, no secrets in compose
+
+“Test Case Service” deliverable checklist (what the junior dev should ship)
+
+ No default secrets (mongo/jwt) in repo
+
+ Uses commons: auth + tenant + error + logging + security headers
+
+ Tenant-aware models + filtered queries everywhere
+
+ Pagination on all list endpoints
+
+ Proper 400/401/404 usage
+
+ Joi validation applied on POST/PUT
+
+
+
+
+
+
+
+
